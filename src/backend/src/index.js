@@ -23,12 +23,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
+let isDatabaseReady = false;
+
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
         version: '1.0.0',
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        database: isDatabaseReady ? 'ready' : 'initializing'
     });
 });
 
@@ -327,25 +330,29 @@ app.use(errorHandler);
 // Database path for Cloud Run
 const dbPath = process.env.DB_PATH || '/tmp/customer_health.db';
 
-// Database initialization on startup
+// Database initialization (background)
 const { initializeDatabase } = require('../../database/init-db');
 
-// Only start server if not in test mode
+// Start server immediately, initialize database in background
 if (process.env.NODE_ENV !== 'test') {
-    // Initialize database first
-    initializeDatabase().then(() => {
-        console.log('✅ Database initialized successfully');
+    // Start the server first to avoid Cloud Run timeout
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Customer Health API server running on port ${PORT}`);
+        console.log(` Health check: http://0.0.0.0:${PORT}/api/health`);
+        console.log(`👥 Customers API: http://0.0.0.0:${PORT}/api/customers`);
+        console.log(`📊 Dashboard API: http://0.0.0.0:${PORT}/api/dashboard`);
 
-        // Start the server
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`🚀 Customer Health API server running on port ${PORT}`);
-            console.log(` Health check: http://0.0.0.0:${PORT}/api/health`);
-            console.log(`👥 Customers API: http://0.0.0.0:${PORT}/api/customers`);
-            console.log(`📊 Dashboard API: http://0.0.0.0:${PORT}/api/dashboard`);
-        });
-    }).catch(err => {
-        console.error('❌ Database initialization failed:', err);
-        process.exit(1);
+        // Initialize database in background
+        console.log(' Initializing database in background...');
+        initializeDatabase()
+            .then(() => {
+                console.log('✅ Database initialized successfully');
+                isDatabaseReady = true;
+            })
+            .catch(err => {
+                console.error('❌ Database initialization failed:', err);
+                // Don't exit - server is already running
+            });
     });
 }
 
