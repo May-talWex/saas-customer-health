@@ -1,0 +1,550 @@
+openapi: 3.0.3
+info:
+  title: Customer Health Score API
+  description: |
+    A comprehensive API for calculating and managing customer health scores for SaaS platforms.
+    This API helps Customer Success teams identify at-risk customers before they churn by
+    analyzing various health indicators including login frequency, feature adoption,
+    support tickets, payment timeliness, and API usage trends.
+  version: 1.0.0
+  contact:
+    name: Customer Health Dashboard Team
+    email: support@customerhealth.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+  - url: https://api.customerhealth.com
+    description: Production server
+
+tags:
+  - name: Health
+    description: System health and status endpoints
+  - name: Customers
+    description: Customer management and health score operations
+  - name: Events
+    description: Customer activity event tracking
+  - name: Dashboard
+    description: Web interface and dashboard serving
+
+paths:
+  /api/health:
+    get:
+      tags:
+        - Health
+      summary: Health Check
+      description: Returns the current health status of the API server
+      operationId: getHealthStatus
+      responses:
+        '200':
+          description: API is healthy and operational
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, unhealthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+                  uptime:
+                    type: number
+                    description: Server uptime in seconds
+                    example: 3600
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /api/customers:
+    get:
+      tags:
+        - Customers
+      summary: List All Customers
+      description: |
+        Retrieves a paginated list of all customers with their current health scores.
+        Results are sorted by health score (highest first) and include comprehensive
+        health metrics for each customer.
+      operationId: listCustomers
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of customers per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: segment
+          in: query
+          description: Filter customers by segment
+          required: false
+          schema:
+            type: string
+            enum: [enterprise, smb, startup]
+        - name: healthLevel
+          in: query
+          description: Filter customers by health level
+          required: false
+          schema:
+            type: string
+            enum: [healthy, at-risk, critical, churned]
+      responses:
+        '200':
+          description: Successfully retrieved customer list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomerHealthSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/customers/{customerId}/health:
+    get:
+      tags:
+        - Customers
+      summary: Get Customer Health Details
+      description: |
+        Retrieves detailed health breakdown for a specific customer, including
+        individual factor scores, recommendations, and historical trends.
+      operationId: getCustomerHealth
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: Unique identifier of the customer
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Successfully retrieved customer health details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      customer:
+                        $ref: '#/components/schemas/Customer'
+                      healthScore:
+                        $ref: '#/components/schemas/HealthScore'
+                      metrics:
+                        $ref: '#/components/schemas/HealthMetrics'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/customers/{customerId}/events:
+    post:
+      tags:
+        - Events
+      summary: Record Customer Event
+      description: |
+        Records a customer activity event (login, feature usage, support ticket, etc.)
+        which will be used to update the customer's health score calculations.
+      operationId: recordCustomerEvent
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: Unique identifier of the customer
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '201':
+          description: Event successfully recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event recorded successfully"
+                  eventId:
+                    type: integer
+                    example: 12345
+        '400':
+          description: Invalid event data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: Serve Dashboard Interface
+      description: |
+        Serves the web-based dashboard interface for viewing customer health data.
+        Returns the HTML page with embedded JavaScript for interactive functionality.
+      operationId: serveDashboard
+      responses:
+        '200':
+          description: Dashboard HTML page served successfully
+          content:
+            text/html:
+              schema:
+                type: string
+                description: HTML content of the dashboard
+
+components:
+  schemas:
+    Customer:
+      type: object
+      required:
+        - id
+        - companyName
+        - segment
+        - planType
+        - monthlyRevenue
+        - signupDate
+      properties:
+        id:
+          type: integer
+          description: Unique customer identifier
+          example: 1
+        companyName:
+          type: string
+          description: Company name
+          example: "TechCorp Solutions"
+        contactEmail:
+          type: string
+          format: email
+          description: Primary contact email
+          example: "contact@techcorp.com"
+        contactName:
+          type: string
+          description: Primary contact name
+          example: "John Smith"
+        segment:
+          type: string
+          enum: [enterprise, smb, startup]
+          description: Customer segment classification
+          example: "smb"
+        planType:
+          type: string
+          enum: [basic, professional, premium, enterprise]
+          description: Subscription plan type
+          example: "professional"
+        monthlyRevenue:
+          type: number
+          format: decimal
+          description: Monthly recurring revenue
+          example: 2500.00
+        signupDate:
+          type: string
+          format: date
+          description: Customer signup date
+          example: "2023-12-28"
+        lastLoginDate:
+          type: string
+          format: date
+          description: Last login date
+          example: "2024-01-15"
+
+    CustomerHealthSummary:
+      allOf:
+        - $ref: '#/components/schemas/Customer'
+        - type: object
+          properties:
+            overallScore:
+              type: number
+              format: decimal
+              minimum: 0
+              maximum: 100
+              description: Overall health score (0-100)
+              example: 85.5
+            healthLevel:
+              type: string
+              enum: [healthy, at-risk, critical, churned]
+              description: Health level classification
+              example: "healthy"
+            calculatedAt:
+              type: string
+              format: date-time
+              description: When the health score was last calculated
+              example: "2024-01-15T10:30:00Z"
+
+    HealthScore:
+      type: object
+      required:
+        - customerId
+        - overallScore
+        - healthLevel
+        - breakdown
+        - calculatedAt
+      properties:
+        customerId:
+          type: integer
+          description: Customer identifier
+          example: 1
+        overallScore:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+          description: Overall health score (0-100)
+          example: 85.5
+        healthLevel:
+          type: string
+          enum: [healthy, at-risk, critical, churned]
+          description: Health level classification
+          example: "healthy"
+        breakdown:
+          $ref: '#/components/schemas/HealthBreakdown'
+        calculatedAt:
+          type: string
+          format: date-time
+          description: When the health score was calculated
+          example: "2024-01-15T10:30:00Z"
+
+    HealthBreakdown:
+      type: object
+      description: Detailed breakdown of health score factors
+      properties:
+        loginFrequency:
+          $ref: '#/components/schemas/HealthFactor'
+        featureAdoption:
+          $ref: '#/components/schemas/HealthFactor'
+        supportTickets:
+          $ref: '#/components/schemas/HealthFactor'
+        paymentTimeliness:
+          $ref: '#/components/schemas/HealthFactor'
+        apiUsage:
+          $ref: '#/components/schemas/HealthFactor'
+
+    HealthFactor:
+      type: object
+      required:
+        - score
+        - weight
+      properties:
+        score:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+          description: Factor score (0-100)
+          example: 85.5
+        weight:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+          description: Weight of this factor in overall score
+          example: 0.25
+
+    HealthMetrics:
+      type: object
+      description: Additional health-related metrics
+      properties:
+        totalEvents:
+          type: integer
+          description: Total number of customer events
+          example: 150
+        recentEvents:
+          type: integer
+          description: Events in the last 30 days
+          example: 25
+        totalTickets:
+          type: integer
+          description: Total support tickets
+          example: 12
+        openTickets:
+          type: integer
+          description: Currently open support tickets
+          example: 2
+        totalPayments:
+          type: integer
+          description: Total payments made
+          example: 24
+        overduePayments:
+          type: integer
+          description: Overdue payments
+          example: 0
+        featuresUsed:
+          type: integer
+          description: Number of features used
+          example: 8
+        apiRequests:
+          type: integer
+          description: Total API requests made
+          example: 5000
+
+    EventRequest:
+      type: object
+      required:
+        - eventType
+        - eventData
+      properties:
+        eventType:
+          type: string
+          enum: [login, logout, feature_usage, support_ticket, payment, api_call]
+          description: Type of event being recorded
+          example: "login"
+        eventData:
+          type: object
+          description: Additional event-specific data
+          properties:
+            ip:
+              type: string
+              format: ipv4
+              description: IP address of the event
+              example: "192.168.1.1"
+            userAgent:
+              type: string
+              description: User agent string
+              example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            feature:
+              type: string
+              description: Feature name (for feature_usage events)
+              example: "dashboard_analytics"
+            ticketId:
+              type: string
+              description: Support ticket ID (for support_ticket events)
+              example: "TICKET-12345"
+            amount:
+              type: number
+              format: decimal
+              description: Payment amount (for payment events)
+              example: 2500.00
+            endpoint:
+              type: string
+              description: API endpoint (for api_call events)
+              example: "/api/customers"
+
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items per page
+          example: 20
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+          example: 150
+        totalPages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+          example: 8
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "ValidationError"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid customer ID provided"
+        details:
+          type: object
+          description: Additional error details
+          example: {"field": "customerId", "value": "invalid"}
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+security:
+  - ApiKeyAuth: []
+
+externalDocs:
+  description: Customer Health Dashboard Documentation
+  url: https://docs.customerhealth.com

@@ -1,0 +1,14 @@
+# Create app.yaml file
+echo "runtime: nodejs18
+service: customer-health-score
+env: standard
+
+env_variables:
+  NODE_ENV: production
+  PORT: 8080
+  DB_PATH: /tmp/customer_health.db
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 10
+  target_cpu_utilization: 0.6" > app.yaml

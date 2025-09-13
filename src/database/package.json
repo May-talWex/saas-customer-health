@@ -1,0 +1,20 @@
+{
+    "name": "customer-health-database",
+    "version": "1.0.0",
+    "description": "Database setup and sample data generation for Customer Health Dashboard",
+    "main": "setup.js",
+    "scripts": {
+        "setup": "node setup.js",
+        "generate-data": "node generateSampleData.js",
+        "generate-realistic": "node generateRealisticData.js",
+        "setup-all": "npm run setup && npm run generate-data",
+        "setup-realistic": "npm run setup && npm run generate-realistic",
+        "reset": "del customer_health.db && npm run setup-all",
+        "reset-realistic": "del customer_health.db && npm run setup-realistic",
+        "view-data": "node viewData.js"
+    },
+    "dependencies": {
+        "dotenv": "^16.3.1",
+        "sqlite3": "^5.1.7"
+    }
+}
