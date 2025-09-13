@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
-const dbPath = '/app/data/customer_health.db';
+const dbPath = process.env.DB_PATH || '/tmp/customer_health.db';
 
 async function initializeDatabase() {
     return new Promise((resolve, reject) => {

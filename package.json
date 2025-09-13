@@ -1,0 +1,45 @@
+{
+    "name": "customer-health-score",
+    "version": "1.0.0",
+    "description": "Customer Health Score Application - Full Stack Deployment",
+    "private": true,
+    "scripts": {
+        "build": "npm run build:frontend",
+        "build:frontend": "cd src/frontend && npm ci && npm run build",
+        "build:backend": "cd src/backend && npm ci",
+        "start": "cd src/backend && npm start",
+        "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+        "dev:backend": "cd src/backend && npm run dev",
+        "dev:frontend": "cd src/frontend && npm start",
+        "install:all": "npm run install:backend && npm run install:frontend && npm run install:database",
+        "install:backend": "cd src/backend && npm ci",
+        "install:frontend": "cd src/frontend && npm ci",
+        "install:database": "cd src/database && npm ci",
+        "test": "npm run test:backend && npm run test:frontend",
+        "test:backend": "cd src/backend && npm test",
+        "test:frontend": "cd src/frontend && npm test",
+        "docker:build": "docker build -t customer-health-score .",
+        "docker:run": "docker run -p 8080:8080 customer-health-score",
+        "test:docker": "powershell -ExecutionPolicy Bypass -File test-deployment.ps1",
+        "deploy": "gcloud builds submit --config cloudbuild.yaml",
+        "deploy:local": "gcloud run deploy customer-health-score --source . --platform managed --region us-central1 --allow-unauthenticated"
+    },
+    "keywords": [
+        "customer-health",
+        "saas",
+        "dashboard",
+        "react",
+        "nodejs",
+        "sqlite",
+        "google-cloud-run"
+    ],
+    "author": "Customer Health Team",
+    "license": "MIT",
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=8.0.0"
+    }
+}

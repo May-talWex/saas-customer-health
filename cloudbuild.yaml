@@ -1,19 +1,11 @@
-# Create cloudbuild.yaml file
-echo "steps:
-  # Install backend dependencies
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['install']
-    dir: 'src/backend'
+steps:
+  # Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/customer-health-score:$COMMIT_SHA', '.']
 
-  # Install frontend dependencies
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['install']
-    dir: 'src/frontend'
-
-  # Build frontend
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['run', 'build']
-    dir: 'src/frontend'
+  # Push Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/customer-health-score:$COMMIT_SHA']
 
   # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -21,8 +13,8 @@ echo "steps:
     - 'run'
     - 'deploy'
     - 'customer-health-score'
-    - '--source'
-    - '.'
+    - '--image'
+    - 'gcr.io/$PROJECT_ID/customer-health-score:$COMMIT_SHA'
     - '--platform'
     - 'managed'
     - '--region'
@@ -36,7 +28,21 @@ echo "steps:
     - '1'
     - '--max-instances'
     - '10'
+    - '--min-instances'
+    - '0'
+    - '--concurrency'
+    - '100'
+    - '--timeout'
+    - '300'
     - '--set-env-vars'
     - 'NODE_ENV=production,PORT=8080,DB_PATH=/tmp/customer_health.db'
-    - '--entrypoint'
-    - 'cd src/backend && npm start'" > cloudbuild.yaml
+
+# Store images in Google Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/customer-health-score:$COMMIT_SHA'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY

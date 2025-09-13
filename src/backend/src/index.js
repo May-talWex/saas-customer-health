@@ -324,13 +324,28 @@ app.use((req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Only start the server if not in test mode
+// Database path for Cloud Run
+const dbPath = process.env.DB_PATH || '/tmp/customer_health.db';
+
+// Database initialization on startup
+const { initializeDatabase } = require('../../database/init-db');
+
+// Only start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`🚀 Customer Health API server running on port ${PORT}`);
-        console.log(` Health check: http://0.0.0.0:${PORT}/api/health`);
-        console.log(`👥 Customers API: http://0.0.0.0:${PORT}/api/customers`);
-        console.log(`📊 Dashboard API: http://0.0.0.0:${PORT}/api/dashboard`);
+    // Initialize database first
+    initializeDatabase().then(() => {
+        console.log('✅ Database initialized successfully');
+
+        // Start the server
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 Customer Health API server running on port ${PORT}`);
+            console.log(` Health check: http://0.0.0.0:${PORT}/api/health`);
+            console.log(`👥 Customers API: http://0.0.0.0:${PORT}/api/customers`);
+            console.log(`📊 Dashboard API: http://0.0.0.0:${PORT}/api/dashboard`);
+        });
+    }).catch(err => {
+        console.error('❌ Database initialization failed:', err);
+        process.exit(1);
     });
 }
 
