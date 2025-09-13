@@ -1,0 +1,66 @@
+# Dependencies - exclude all node_modules
+**/node_modules
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+src/frontend/build
+
+# Environment files
+.env*
+
+# Logs
+logs
+*.log
+
+# Coverage and test files
+coverage
+*.lcov
+.nyc_output
+**/*.test.js
+**/*.spec.js
+**/tests/
+**/__tests__/
+
+# Cache directories
+.cache
+.parcel-cache
+.npm
+.eslintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# IDE and OS files
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+DEPLOYMENT.md
+
+# Database files (will be created at runtime)
+*.db
+*.sqlite
+*.sqlite3
+
+# Build artifacts
+dist
+build
+.next
+.nuxt
+.vuepress/dist
+
+# Temporary files
+*.tmp
+*.temp
