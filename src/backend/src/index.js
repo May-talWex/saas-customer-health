@@ -327,17 +327,40 @@ app.use((req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Start server immediately - no database dependency
+// Database path for Cloud Run
+const dbPath = process.env.DB_PATH || '/tmp/customer_health.db';
+
+// Start server immediately, initialize database in background
 if (process.env.NODE_ENV !== 'test') {
     console.log('🚀 Starting server immediately...');
-
+    
     // Start the server first to avoid Cloud Run timeout
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(`✅ Customer Health API server running on port ${PORT}`);
         console.log(` Health check: http://0.0.0.0:${PORT}/api/health`);
         console.log(`👥 Customers API: http://0.0.0.0:${PORT}/api/customers`);
         console.log(`📊 Dashboard API: http://0.0.0.0:${PORT}/api/dashboard`);
-        console.log('⚠️  Database initialization disabled for now');
+        
+        // Initialize database in background with better error handling
+        setTimeout(() => {
+            console.log(' Initializing database in background...');
+            try {
+                const { initializeDatabase } = require('../../database/init-db');
+                initializeDatabase()
+                    .then(() => {
+                        console.log('✅ Database initialized successfully');
+                        isDatabaseReady = true;
+                    })
+                    .catch(err => {
+                        console.error('❌ Database initialization failed:', err);
+                        console.log('⚠️  Server will continue running without database');
+                        // Don't exit - server is already running
+                    });
+            } catch (err) {
+                console.error('❌ Error loading database initialization:', err);
+                console.log('⚠️  Server will continue running without database');
+            }
+        }, 2000); // Wait 2 seconds before starting DB init
     });
 
     // Handle server errors
