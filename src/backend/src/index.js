@@ -333,14 +333,14 @@ const dbPath = process.env.DB_PATH || '/tmp/customer_health.db';
 // Start server immediately, initialize database in background
 if (process.env.NODE_ENV !== 'test') {
     console.log('🚀 Starting server immediately...');
-    
+
     // Start the server first to avoid Cloud Run timeout
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(`✅ Customer Health API server running on port ${PORT}`);
         console.log(` Health check: http://0.0.0.0:${PORT}/api/health`);
         console.log(`👥 Customers API: http://0.0.0.0:${PORT}/api/customers`);
         console.log(`📊 Dashboard API: http://0.0.0.0:${PORT}/api/dashboard`);
-        
+
         // Initialize database in background with better error handling
         setTimeout(() => {
             console.log(' Initializing database in background...');
