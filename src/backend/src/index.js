@@ -304,7 +304,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 // Serve React app build files
-const frontendBuildPath = path.join(__dirname, '../../frontend/build');
+const frontendBuildPath = path.join(__dirname, '../frontend/build');
 console.log('Looking for frontend build at:', frontendBuildPath);
 console.log('Frontend build exists:', require('fs').existsSync(frontendBuildPath));
 
@@ -345,7 +345,7 @@ if (process.env.NODE_ENV !== 'test') {
         setTimeout(() => {
             console.log(' Initializing database in background...');
             try {
-                const { initializeDatabase } = require('../../database/init-db');
+                const { initializeDatabase } = require('../database/init-db');
                 initializeDatabase()
                     .then(() => {
                         console.log('✅ Database initialized successfully');
