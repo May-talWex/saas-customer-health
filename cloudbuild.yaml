@@ -1,9 +1,14 @@
 # Create cloudbuild.yaml file
 echo "steps:
-  # Install dependencies
+  # Install backend dependencies
   - name: 'gcr.io/cloud-builders/npm'
     args: ['install']
     dir: 'src/backend'
+
+  # Install frontend dependencies
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install']
+    dir: 'src/frontend'
 
   # Build frontend
   - name: 'gcr.io/cloud-builders/npm'
@@ -17,7 +22,7 @@ echo "steps:
     - 'deploy'
     - 'customer-health-score'
     - '--source'
-    - 'src/backend'
+    - '.'
     - '--platform'
     - 'managed'
     - '--region'
@@ -32,4 +37,6 @@ echo "steps:
     - '--max-instances'
     - '10'
     - '--set-env-vars'
-    - 'NODE_ENV=production,PORT=8080,DB_PATH=/tmp/customer_health.db'" > cloudbuild.yaml
+    - 'NODE_ENV=production,PORT=8080,DB_PATH=/tmp/customer_health.db'
+    - '--entrypoint'
+    - 'cd src/backend && npm start'" > cloudbuild.yaml
