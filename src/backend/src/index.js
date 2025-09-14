@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+
 require('dotenv').config();
 
 // Import routes
@@ -15,12 +17,23 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+const swaggerDocument = YAML.load(path.join(__dirname, '../docs/api.yaml'));
+
+
 // Middleware
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger UI Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// Serve the OpenAPI spec
+app.get('/api.yaml', (req, res) => {
+    res.sendFile(path.join(__dirname, '../docs/api.yaml'));
+});
 
 // Health check endpoint
 let isDatabaseReady = false;
