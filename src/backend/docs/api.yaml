@@ -15,9 +15,9 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:8080
     description: Development server
-  - url: https://api.customerhealth.com
+  - url: https://saas-customer-health-956859179570.europe-west1.run.app
     description: Production server
 
 tags:
@@ -48,19 +48,22 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [healthy, unhealthy]
+                    enum: [healthy]
                     example: healthy
                   timestamp:
                     type: string
                     format: date-time
                     example: "2024-01-15T10:30:00Z"
-                  uptime:
-                    type: number
-                    description: Server uptime in seconds
-                    example: 3600
                   version:
                     type: string
                     example: "1.0.0"
+                  environment:
+                    type: string
+                    example: "production"
+                  database:
+                    type: string
+                    enum: [ready, initializing]
+                    example: "ready"
 
   /api/customers:
     get:
@@ -260,6 +263,245 @@ paths:
               schema:
                 type: string
                 description: HTML content of the dashboard
+
+  /api/debug:
+    get:
+      tags:
+        - Debug
+      summary: Debug Information
+      description: Get system debug information
+      operationId: getDebugInfo
+      responses:
+        '200':
+          description: Debug information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  uptime:
+                    type: number
+                    example: 3600
+                  environment:
+                    type: string
+                    example: "production"
+                  database:
+                    type: string
+                    enum: [ready, initializing]
+                    example: "ready"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/debug/database:
+    get:
+      tags:
+        - Debug
+      summary: Database Debug
+      description: Get detailed database status and metrics
+      operationId: getDatabaseDebug
+      responses:
+        '200':
+          description: Database debug information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  uptime:
+                    type: number
+                    example: 3600
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+                  metrics:
+                    type: object
+                    properties:
+                      totalConnections:
+                        type: integer
+                        example: 10
+                      activeConnections:
+                        type: integer
+                        example: 5
+                      idleConnections:
+                        type: integer
+                        example: 3
+                      totalQueries:
+                        type: integer
+                        example: 1000
+                      slowQueries:
+                        type: integer
+                        example: 5
+                      totalErrors:
+                        type: integer
+                        example: 10
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/debug/customers:
+    get:
+      tags:
+        - Debug
+      summary: Customer Debug
+      description: Get detailed customer data for debugging
+      operationId: getCustomerDebug
+      responses:
+        '200':
+          description: Customer debug information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  uptime:
+                    type: number
+                    example: 3600
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+                  totalCustomers:
+                    type: integer
+                    example: 1000
+                  recentCustomers:
+                    type: integer
+                    example: 10
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/debug/frontend-data:
+    get:
+      tags:
+        - Debug
+      summary: Frontend Data Debug
+      description: Get raw frontend data for debugging
+      operationId: getFrontendDataDebug
+      responses:
+        '200':
+          description: Frontend data debug information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  uptime:
+                    type: number
+                    example: 3600
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+                  totalEvents:
+                    type: integer
+                    example: 100000
+                  recentEvents:
+                    type: integer
+                    example: 1000
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/customers/{customerId}/health-data/{component}:
+    get:
+      tags:
+        - Health
+      summary: Get Health Component Data
+      description: Get raw data for a specific health component
+      operationId: getHealthComponentData
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          description: Unique identifier of the customer
+          schema:
+            type: integer
+            minimum: 1
+        - name: component
+          in: path
+          required: true
+          description: Name of the health component (e.g., loginFrequency, featureAdoption)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Health component data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          format: date-time
+                        value:
+                          type: number
+                          format: decimal
+                          example: 85.5
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '404':
+          description: Customer or component not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
