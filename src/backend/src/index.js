@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
-
+const YAML = require('yamljs');
 require('dotenv').config();
 
 // Import routes
