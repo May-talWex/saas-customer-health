@@ -38,6 +38,9 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy backend source code
 COPY src/backend/src ./src
 
+# Copy API documentation
+COPY src/backend/docs ./docs
+
 # Copy database initialization files
 COPY src/database ./database
 
