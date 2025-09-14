@@ -17,8 +17,20 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-const swaggerDocument = YAML.load(path.join(__dirname, '../docs/api.yaml'));
-
+// Load Swagger documentation with error handling
+let swaggerDocument = null;
+try {
+    const docsPath = path.join(__dirname, '../docs/api.yaml');
+    if (require('fs').existsSync(docsPath)) {
+        swaggerDocument = YAML.load(docsPath);
+        console.log('✅ API documentation loaded successfully');
+    } else {
+        console.log('⚠️  API documentation file not found, skipping Swagger UI setup');
+    }
+} catch (error) {
+    console.log('⚠️  Error loading API documentation:', error.message);
+    console.log('⚠️  Continuing without Swagger UI');
+}
 
 // Middleware
 app.use(helmet());
@@ -27,13 +39,34 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Swagger UI Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Swagger UI Documentation (only if docs are available)
+if (swaggerDocument) {
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    console.log('✅ Swagger UI available at /api-docs');
+} else {
+    app.get('/api-docs', (req, res) => {
+        res.status(404).json({
+            error: 'API documentation not available',
+            message: 'Swagger UI is not configured in this environment'
+        });
+    });
+}
 
-// Serve the OpenAPI spec
-app.get('/api.yaml', (req, res) => {
-    res.sendFile(path.join(__dirname, '../docs/api.yaml'));
-});
+// Serve the OpenAPI spec (only if docs are available)
+if (swaggerDocument) {
+    app.get('/api.yaml', (req, res) => {
+        const docsPath = path.join(__dirname, '../docs/api.yaml');
+        if (require('fs').existsSync(docsPath)) {
+            res.sendFile(docsPath);
+        } else {
+            res.status(404).json({ error: 'API specification not available' });
+        }
+    });
+} else {
+    app.get('/api.yaml', (req, res) => {
+        res.status(404).json({ error: 'API specification not available' });
+    });
+}
 
 // Health check endpoint
 let isDatabaseReady = false;
